@@ -8,4 +8,18 @@ class Api::UsersController < ApplicationController
 		@user = User.find(params[:id])
 	end
 
+	def create
+		@user = User.create!(user_params)
+		render status: :created
+	end
+
+	private
+
+	def user_params
+		params.permit(
+			:email,
+			:password
+		)
+	end
+
 end
