@@ -10,7 +10,7 @@ RSpec.describe Api::UsersController, type: :request do
 		before { get api_users_path }
 
 		it "returns JSON" do
-			puts response.inspect
+			puts
 			expect(response.content_type).to eq("application/json")
 		end
 
