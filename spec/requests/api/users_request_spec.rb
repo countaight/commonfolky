@@ -63,7 +63,7 @@ RSpec.describe Api::UsersController, type: :request do
 			it "returns a successful status (201) if properly created" do
 				user_attributes = attributes_for :user
 				expect {
-					post "/api/users", params: user_attributes
+					post "/api/users", params: { user: user_attributes }
 				}.to change(User, :count).by(1)
 
 				expect(response.status).to eq(201)
@@ -71,7 +71,7 @@ RSpec.describe Api::UsersController, type: :request do
 
 			it "returns a successfully created json" do
 				user_attributes = attributes_for :user
-				post "/api/users", params: user_attributes
+				post "/api/users", params: { user: user_attributes }
 				expect(json["username"]).to eq(user_attributes[:username])
 			end
 
@@ -81,14 +81,14 @@ RSpec.describe Api::UsersController, type: :request do
 
 			it "returns an error with an invalid user" do
 				expect {
-					post "/api/users", params: { user: "wrong params" }
+					post "/api/users", params: { user: { email: nil, password: nil } }
 				}.to_not change(User, :count)
 
 				expect(response.status).to eq(422)
 			end
 
 			it "returns json with errors" do
-				post "/api/users", params: { user: "wrong params" }
+				post "/api/users", params: { user: { email: nil, password: nil } }
 				expect(json["errors"]).to_not be_empty
 			end
 
