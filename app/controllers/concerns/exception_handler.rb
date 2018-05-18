@@ -10,7 +10,7 @@ module ExceptionHandler
 
 	included do
 		rescue_from ExceptionHandler::AuthenticationError, with: :unauthorized_request
-		rescue_from ExceptionHandler::MissingToken, with: :fout_twenty_two
+		rescue_from ExceptionHandler::MissingToken, with: :four_zero_one
 		rescue_from ExceptionHandler::InvalidToken, with: :four_twenty_two
 		rescue_from ExceptionHandler::ExpiredSignature, with: :four_ninety_eigth
 		rescue_from ExceptionHandler::DecodeError, with: :four_zero_one
@@ -34,7 +34,11 @@ module ExceptionHandler
 	end
 
 	def four_zero_one(e)
-		render json: { errors: e.message }, status: :invalid_token
+		render json: { errors: e.message }, status: :unauthorized
+	end
+
+	def unauthorized_request(e)
+		render json: { errors: e.message }, status: :unauthorized
 	end
 
 end

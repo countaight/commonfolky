@@ -7,19 +7,26 @@ RSpec.describe Api::UsersController, type: :request do
 
 	describe "GET index" do
 
-		before { get api_users_path }
+		context "unauthorized" do
 
-		it "returns JSON" do
-			puts
-			expect(response.content_type).to eq("application/json")
+			before { get api_users_path }
+
+			it "returns JSON" do
+				expect(response.content_type).to eq("application/json")
+			end
+
+			it "returns status code 401" do
+				expect(response).to have_http_status(401)
+			end
+
+		  it "returns proper error" do
+				expect(json["errors"]).to eq("Missing Token")
+			end
+
 		end
 
-		it "returns status code 200" do
-			expect(response).to have_http_status(200)
-		end
+		context "authorized" do
 
-	  it "returns all users" do
-			expect(json.size).to eq(5)
 		end
 
 	end
