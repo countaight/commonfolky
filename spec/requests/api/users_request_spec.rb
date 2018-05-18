@@ -25,7 +25,20 @@ RSpec.describe Api::UsersController, type: :request do
 
 		end
 
-		context "authorized" do
+		context "authorized access" do
+
+			before {
+				token = AuthenticateUser.call(user.email, user.password).result
+				get api_users_path, headers: { 'Authorization': "Bearer #{token}" }
+			}
+
+			it "returns status code 200" do
+				expect(response).to have_http_status(200)
+			end
+
+			it "returns users" do
+				expect(json.size).to eq(5);
+			end
 
 		end
 
@@ -33,30 +46,44 @@ RSpec.describe Api::UsersController, type: :request do
 
 	describe "GET show" do
 
-		context "valid user" do
+		context "authorized access" do
 
-			before { get "/api/users/#{user.id}" }
+			before {
+				def token
+					AuthenticateUser.call(user.email, user.password).result
+				end
+			}
 
-			it "returns JSON" do
-				expect(response.content_type).to eq("application/json")
+			context "valid user" do
+
+				before {
+					get "/api/users/#{user.id}", headers: { "Authorization": "Bearer #{token}"}
+				}
+
+				it "returns JSON" do
+					expect(response.content_type).to eq("application/json")
+				end
+
+				it "returns the correct user" do
+					expect(json["id"]).to eq(user.id)
+				end
+
 			end
 
-			it "returns the correct user" do
-				expect(json["id"]).to eq(user.id)
-			end
+			context "invalid user" do
 
-		end
+				before {
+					get "/api/users/0", headers: { "Authorization": "Bearer #{token}"}
+				}
 
-		context "invalid user" do
+				it "returns JSON" do
+					expect(response.content_type).to eq("application/json")
+				end
 
-			before { get "/api/users/0" }
+				it "returns status code 404" do
+					expect(response).to have_http_status(404)
+				end
 
-			it "returns JSON" do
-				expect(response.content_type).to eq("application/json")
-			end
-
-			it "returns status code 404" do
-				expect(response).to have_http_status(404)
 			end
 
 		end
@@ -65,38 +92,48 @@ RSpec.describe Api::UsersController, type: :request do
 
 	describe "POST create" do
 
-		context "with a valid user" do
+		context "authorized access" do
 
-			it "returns a successful status (201) if properly created" do
-				user_attributes = attributes_for :user
-				expect {
+			before {
+				def token
+					AuthenticateUser.call(user.email, user.password).result
+				end
+			}
+
+			context "with a valid user" do
+
+				it "returns a successful status (201) if properly created" do
+					user_attributes = attributes_for :user
+					expect {
+						post "/api/users", headers: { 'Authorization': "Bearer #{token}" }, params: { user: user_attributes }
+					}.to change(User, :count).by(1)
+
+					expect(response.status).to eq(201)
+				end
+
+				it "returns a successfully created json" do
+					user_attributes = attributes_for :user
 					post "/api/users", params: { user: user_attributes }
-				}.to change(User, :count).by(1)
+					expect(json["username"]).to eq(user_attributes[:username])
+				end
 
-				expect(response.status).to eq(201)
 			end
 
-			it "returns a successfully created json" do
-				user_attributes = attributes_for :user
-				post "/api/users", params: { user: user_attributes }
-				expect(json["username"]).to eq(user_attributes[:username])
-			end
+			context "with an invalid user" do
 
-		end
+				it "returns an error with an invalid user" do
+					expect {
+						post "/api/users", headers: { 'Authorization': "Bearer #{token}" }, params: { user: { email: nil, password: nil } }
+					}.to_not change(User, :count)
 
-		context "with an invalid user" do
+					expect(response.status).to eq(422)
+				end
 
-			it "returns an error with an invalid user" do
-				expect {
+				it "returns json with errors" do
 					post "/api/users", params: { user: { email: nil, password: nil } }
-				}.to_not change(User, :count)
+					expect(json["errors"]).to_not be_empty
+				end
 
-				expect(response.status).to eq(422)
-			end
-
-			it "returns json with errors" do
-				post "/api/users", params: { user: { email: nil, password: nil } }
-				expect(json["errors"]).to_not be_empty
 			end
 
 		end
